@@ -1,2 +1,4 @@
 # CodeBento
-CodeBento - a compact, sleek, powerful web notebook to write and run code instantly. 
+Compact in form. Simple in design. Rich in content.
+
+CodeBento - A lightweight, clean, powerful web notebook for writing and running code instantly.
