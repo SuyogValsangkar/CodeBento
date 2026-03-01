@@ -1,1 +1,32 @@
 # Ignores the following files and directories:
+
+# Node.js dependencies
+node_modules/
+package-lock.json
+
+# Rust build artifacts
+/runner/target/
+**/*.rs.bk
+
+# Vite / React build output
+/frontend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
