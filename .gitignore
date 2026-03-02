@@ -27,6 +27,18 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Spin-runner build artifacts
+spin-runner/venv/
+spin-runner/__pycache__/
+spin-runner/*.pyc
+spin-runner/*.pyo
+spin-runner/app.wasm
+spin-runner/.spin
+
+# Spin signing artifacts
+spin.sig
+crt.pem
+
 # Temporary files
 *.tmp
 *.swp

@@ -1,0 +1,19 @@
+spin_manifest_version = 2
+
+[application]
+name = "codebento-spin-runner"
+version = "0.1.0"
+authors = ["Your Name <you@example.com>"]
+description = "Spin/WASM-based code runner for CodeBento"
+
+[[trigger.http]]
+route = "/execute"
+component = "code-runner"
+
+[component.code-runner]
+source = "app.wasm"
+
+[component.code-runner.build]
+# Turn app.py into a Spin HTTP-compatible WebAssembly component
+command = "componentize-py -w spin-http componentize app -o app.wasm"
+watch = ["*.py", "requirements.txt"]
