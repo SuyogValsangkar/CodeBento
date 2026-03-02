@@ -10,6 +10,7 @@ function App() {
   const [stderr, setStderr] = useState('');
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
+  const [stdin, setStdin] = useState('');
 
   const handleRun = async () => {
     setLoading(true);
@@ -20,7 +21,7 @@ function App() {
       const response = await fetch('http://localhost:3000/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, sourceCode }),
+        body: JSON.stringify({ language, sourceCode, stdin }),
       });
 
       if (!response.ok) {
@@ -49,7 +50,12 @@ function App() {
         loading={loading}
       />
 
-      <OutputPanel stdout={stdout} stderr={stderr} />
+      <OutputPanel
+        stdout={stdout}
+        stderr={stderr}
+        stdin={stdin}
+        onStdinChange={setStdin}
+      />
 
       <div className="notes-section" style={{ marginTop: '1rem' }}>
         <h2>Sticky Notes</h2>

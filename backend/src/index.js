@@ -31,7 +31,7 @@ const start = async () => {
 
 // Endpoint to execute code
 fastify.post("/execute", async (request, reply) => {
-  const { language, sourceCode } = request.body;
+  const { language, sourceCode, stdin } = request.body;
 
   // Validate input
   if (!supportedLanguages.includes(language) || !sourceCode) {
@@ -50,7 +50,7 @@ fastify.post("/execute", async (request, reply) => {
     const res = await fetch(RUNNER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sourceCode }),
+      body: JSON.stringify({ sourceCode, stdin: typeof stdin === "string" ? stdin : "" }),
       signal: controller.signal,
     });
     clearTimeout(timeout);
