@@ -1,11 +1,46 @@
 const fastify = require("fastify")();
 const cors = require("@fastify/cors");
+const { randomUUID } = require("crypto");
+
+/**
+ * Session model (in-memory for now).
+ *
+ * Session object shape:
+ * {
+ *   id: string,
+ *   language: string,
+ *   sessionState: object | null,
+ *   createdAt: number,      // ms since epoch
+ *   lastUsedAt: number      // ms since epoch
+ * }
+ *
+ * Runner session contract (backend ↔ Spin runner):
+ *
+ * Request (to runner):
+ * {
+ *   sourceCode: string,
+ *   stdinChunk?: string,
+ *   sessionState?: object | null
+ * }
+ *
+ * Response (from runner):
+ * {
+ *   status: "running" | "waiting_for_input" | "done" | "error",
+ *   stdout: string,
+ *   stderr: string,
+ *   prompt?: string,
+ *   sessionState: object | null
+ * }
+ */
+const sessions = new Map();
+const SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 // Supported languages for future extension
 const supportedLanguages = ["python"];
 
 // Spin runner URL
 const RUNNER_URL = process.env.RUNNER_URL || "http://127.0.0.1:3001/execute";
+const RUNNER_SESSION_URL = process.env.RUNNER_SESSION_URL || "http://127.0.0.1:3001/execute-session";
 
 // Enable CORS
 fastify.register(cors, {
@@ -28,6 +63,167 @@ const start = async () => {
     process.exit(1);
   }
 };
+
+// Helper function to check for expired sessions
+function isSessionExpired(session) {
+  if (!session) return true;
+  const now = Date.now();
+  return now - session.lastUsedAt > SESSION_TTL_MS
+}
+
+// Endpoint to create a new session
+fastify.post("/sessions", async (request, reply) => {
+  const { language = "python", notebookId } = request.body || {};
+
+  // Validate language
+  if (!supportedLanguages.includes(language)) {
+    return reply.status(400).send({
+      error: `Unsupported language '${language}'.`,
+    });
+  }
+
+  // Create session identifier
+  const id = randomUUID();
+  const now = Date.now();
+
+  // Create session object
+  sessions.set(id, {
+    id,
+    language,
+    notebookId: notebookId ?? null,
+    sessionState: null,
+    createdAt: now,
+    lastUsedAt: now,
+  });
+
+  return reply.send({ sessionID: id, language });
+});
+
+// Execute or resume code in an interactive session
+fastify.post("/sessions/:sessionID/execute", async (request, reply) => {
+  const { sessionID } = request.params;
+  const { sourceCode, stdinChunk, reset = false } = request.body || {};
+
+  const session = sessions.get(sessionID);
+
+  if (!session || isSessionExpired(session)) {
+    if (session) {
+      sessions.delete(sessionID);
+    }
+    return reply.send({
+      sessionID,
+      status: "expired",
+      stdout: "",
+      stderr: "Session has expired or does not exist. Please create a new session.",
+      prompt: "",
+      canContinue: false,
+    });
+  }
+
+  // Optionally reset the session state
+  if (reset) {
+    session.sessionState = null;
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
+
+  try {
+    const res = await fetch(RUNNER_SESSION_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sourceCode: sourceCode ?? null,
+        stdinChunk: typeof stdinChunk === "string" ? stdinChunk : "",
+        sessionState: session.sessionState ?? {},
+      }),
+      signal: controller.signal,
+    })
+
+    clearTimeout(timeout);
+
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      return reply.send({
+        sessionID,
+        status: "error",
+        stdout: "",
+        stderr: "Runner returned a non-JSON response in session mode.",
+        prompt: "",
+        canContinue: false,
+      });
+    }
+
+    // If the runner itself throws HTTP exception
+    if (!res.ok) {
+      return reply.send({
+        sessionID,
+        status: "error",
+        stdout: typeof data.stdout === "string" ? data.stdout : "",
+        stderr:
+          typeof data.stderr === "string"
+            ? data.stderr
+            : `Runner HTTP error ${res.status} in session mode.`,
+        prompt: "",
+        canContinue: false,
+      });
+    }
+
+    // Create session state object
+    const {
+      status,
+      stdout = "",
+      stderr = "",
+      prompt = "",
+      sessionState: newSessionState = {},
+    } = data;
+
+    // Update session state and last-used time
+    session.sessionState = newSessionState || {};
+    session.lastUsedAt = Date.now()
+
+    const canContinue = status === "waiting_for_input";
+
+    // Return status of session object, catch abort error
+    return reply.send({
+      sessionID,
+      status: typeof status === "string" ? status : "error",
+      stdout: typeof stdout === "string" ? stdout : "",
+      stderr: typeof stderr === "string" ? stderr : "",
+      prompt: typeof prompt === "string" ? prompt : "",
+      canContinue,
+    });
+  } catch (err) {
+    clearTimeout(timeout);
+    const message =
+      err.name === "AbortError"
+        ? "Session step timed out after 10 seconds."
+        : `Failed to reach session runner: ${err.message}`;
+
+    return reply.send({
+      sessionID,
+      status: "error",
+      stdout: "",
+      stderr: message,
+      prompt: "",
+      canContinue: false,
+    });
+  }
+});
+
+// Endpoint to end a session
+fastify.delete("/sessions/:sessionID", async (request, reply) => {
+  const { sessionID } = request.params;
+  const existed = sessions.delete(sessionID);
+
+  return reply.send({
+    sessionID, 
+    ok: true,
+    deleted: existed,
+  });
+});
 
 // Endpoint to execute code
 fastify.post("/execute", async (request, reply) => {

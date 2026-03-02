@@ -10,6 +10,10 @@ description = "Spin/WASM-based code runner for CodeBento"
 route = "/execute"
 component = "code-runner"
 
+[[trigger.http]]
+route = "/execute-session"
+component = "code-runner"
+
 [component.code-runner]
 source = "app.wasm"
 
