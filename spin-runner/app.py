@@ -42,9 +42,12 @@ class IncomingHandler(http.IncomingHandler):
         try:
             # Execute user code inside WASM sandboxed Python interpreter.
             # We capture both stdout and stderr.
+            # Use a single namespace so top-level names (e.g. functions) are visible
+            # to the rest of the code and to recursive calls.
             code_obj = compile(source_code, "<user_code>", "exec")
+            namespace = {}
             with redirect_stdout(stdout_buffer), redirect_stderr(stderr_buffer):
-                exec(code_obj, {}, {})
+                exec(code_obj, namespace, namespace)
         except Exception:
             # If execution fails, capture the traceback into stderr
             stderr_buffer.write(traceback.format_exc())

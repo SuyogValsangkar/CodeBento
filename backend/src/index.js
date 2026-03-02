@@ -1,10 +1,11 @@
 const fastify = require("fastify")();
-const { spawn } = require("child_process");
-const path = require("path");
 const cors = require("@fastify/cors");
 
 // Supported languages for future extension
 const supportedLanguages = ["python"];
+
+// Spin runner URL
+const RUNNER_URL = process.env.RUNNER_URL || "http://127.0.0.1:3001/execute";
 
 // Enable CORS
 fastify.register(cors, {
@@ -34,63 +35,66 @@ fastify.post("/execute", async (request, reply) => {
 
   // Validate input
   if (!supportedLanguages.includes(language) || !sourceCode) {
-    return reply
-      .status(400)
-      .send({
-        error: "Invalid input. Please select a language and provide source code.",
-      });
+    return reply.status(400).send({
+      error:
+        "Invalid input. Please select a language and provide source code.",
+    });
   }
 
-  // Absolute path to runner folder
-  const runnerPath = path.join(__dirname, "../../runner");
+  // Create abort controller and timeout
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10_000);
 
-  // Spawn the runner process
-  return new Promise((resolve) => {
-    const runner = spawn("cargo", ["run"], { cwd: runnerPath });
+  // Call spin runner
+  try {
+    const res = await fetch(RUNNER_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sourceCode }),
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
 
-    // Optional: timeout (10s for example)
-    const timeout = setTimeout(() => {
-      runner.kill();
-      resolve(
-        reply.send({
-          stdout: "",
-          stderr: "Execution timed out after 10 seconds",
-        })
-      );
-    }, 10000);
+    // parse JSON response
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      return reply.send({
+        stdout: "",
+        stderr: "Runner returned a non-JSON response",
+      });
+    }
 
-    let stdout = "";
-    let stderr = "";
+    // Normalize errors
+    if (!res.ok) {
+      return reply.send({
+        stdout: typeof data.stdout === "string" ? data.stdout : "",
+        stderr:
+          typeof data.stderr === "string"
+            ? data.stderr
+            : `Runner HTTP error ${res.status}`,
+      });
+    }
 
-    runner.stdout.on("data", (data) => {
-      stdout += data;
+    // Return result
+    return reply.send({
+      stdout: typeof data.stdout === "string" ? data.stdout : "",
+      stderr: typeof data.stderr === "string" ? data.stderr : "",
     });
 
-    runner.stderr.on("data", (data) => {
-      stderr += data;
+  // Catch timeouts and network errors
+  } catch (err) {
+    const message =
+      err.name === "AbortError"
+        ? "Execution timed out after 10 seconds"
+        : `Failed to reach code runner: ${err.message}`;
+
+    return reply.send({
+      stdout: "",
+      stderr: message,
     });
-
-    runner.on("close", () => {
-      clearTimeout(timeout);
-
-      // Parse runner output as JSON
-      let result;
-      try {
-        result = JSON.parse(stdout);
-      } catch {
-        result = {
-          stdout: "",
-          stderr: `Runner output parse error. Raw stderr: ${stderr}`,
-        };
-      }
-
-      resolve(reply.send(result));
-    });
-
-    // Send code to runner stdin
-    runner.stdin.write(sourceCode);
-    runner.stdin.end();
-  });
+  }
 });
 
 start();
