@@ -5,7 +5,9 @@ type EditorProps = {
   sourceCode?: string;
   onSourceCodeChange: (code: string) => void;
   onRun: () => void;
+  onStop?: () => void;
   loading?: boolean;
+  showStopButton?: boolean;
 };
 
 const Editor: React.FC<EditorProps> = ({
@@ -13,7 +15,9 @@ const Editor: React.FC<EditorProps> = ({
   sourceCode = '',
   onSourceCodeChange,
   onRun,
+  onStop,
   loading = false,
+  showStopButton = false,
 }) => (
   <div className="editor-section" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
     <label>
@@ -55,6 +59,23 @@ const Editor: React.FC<EditorProps> = ({
     >
       {loading ? 'Running...' : 'Run'}
     </button>
+
+    {showStopButton && onStop && (
+      <button
+        type="button"
+        onClick={onStop}
+        style={{
+          padding: '0.5rem 1rem',
+          borderRadius: '4px',
+          backgroundColor: '#c62828',
+          color: 'white',
+          cursor: 'pointer',
+          border: 'none',
+        }}
+      >
+        Stop
+      </button>
+    )}
   </div>
 );
 
