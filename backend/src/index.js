@@ -3,6 +3,7 @@ const cors = require("@fastify/cors");
 const { randomUUID } = require("crypto");
 const sessions = new Map();
 const SESSION_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const SESSION_EXPIRED_MESSAGE = "Session has expired or does not exist. Please create a new session.";
 
 // Supported languages for future extension
 const supportedLanguages = ["python"];
@@ -75,6 +76,18 @@ fastify.post("/sessions/:sessionID/execute", async (request, reply) => {
 
   const session = sessions.get(sessionID);
 
+  // Validate source code for session execution
+  if (typeof sourceCode !== "string" || !sourceCode.trim()) {
+    return reply.status(400).send({
+      sessionID,
+      status: "error",
+      stdout: "",
+      stderr: "Invalid input. Please provide non-empty source code for the session.",
+      prompt: "",
+      canContinue: false,
+    });
+  }
+
   if (!session || isSessionExpired(session)) {
     if (session) {
       sessions.delete(sessionID);
@@ -83,7 +96,7 @@ fastify.post("/sessions/:sessionID/execute", async (request, reply) => {
       sessionID,
       status: "expired",
       stdout: "",
-      stderr: "Session has expired or does not exist. Please create a new session.",
+      stderr: SESSION_EXPIRED_MESSAGE,
       prompt: "",
       canContinue: false,
     });
