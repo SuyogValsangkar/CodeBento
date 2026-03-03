@@ -1,39 +1,8 @@
 const fastify = require("fastify")();
 const cors = require("@fastify/cors");
 const { randomUUID } = require("crypto");
-
-/**
- * Session model (in-memory for now).
- *
- * Session object shape:
- * {
- *   id: string,
- *   language: string,
- *   sessionState: object | null,
- *   createdAt: number,      // ms since epoch
- *   lastUsedAt: number      // ms since epoch
- * }
- *
- * Runner session contract (backend ↔ Spin runner):
- *
- * Request (to runner):
- * {
- *   sourceCode: string,
- *   stdinChunk?: string,
- *   sessionState?: object | null
- * }
- *
- * Response (from runner):
- * {
- *   status: "running" | "waiting_for_input" | "done" | "error",
- *   stdout: string,
- *   stderr: string,
- *   prompt?: string,
- *   sessionState: object | null
- * }
- */
 const sessions = new Map();
-const SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const SESSION_TTL_MS = 2 * 60 * 1000; // 2 minutes
 
 // Supported languages for future extension
 const supportedLanguages = ["python"];
@@ -45,7 +14,7 @@ const RUNNER_SESSION_URL = process.env.RUNNER_SESSION_URL || "http://127.0.0.1:3
 // Enable CORS
 fastify.register(cors, {
   origin: "http://localhost:5173", // allow your frontend
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "DELETE"],
 });
 
 // Basic route to check if the backend is running
@@ -179,17 +148,23 @@ fastify.post("/sessions/:sessionID/execute", async (request, reply) => {
       prompt = "",
       sessionState: newSessionState = {},
     } = data;
-
+    
     // Update session state and last-used time
     session.sessionState = newSessionState || {};
-    session.lastUsedAt = Date.now()
-
-    const canContinue = status === "waiting_for_input";
-
-    // Return status of session object, catch abort error
+    session.lastUsedAt = Date.now();
+    
+    const normalizedStatus = typeof status === "string" ? status : "error";
+    const canContinue = normalizedStatus === "waiting_for_input";
+    
+    // If the session has finished (done or error), remove it
+    if (normalizedStatus !== "waiting_for_input") {
+      sessions.delete(sessionID);
+    }
+    
+    // Return status of session object
     return reply.send({
       sessionID,
-      status: typeof status === "string" ? status : "error",
+      status: normalizedStatus,
       stdout: typeof stdout === "string" ? stdout : "",
       stderr: typeof stderr === "string" ? stderr : "",
       prompt: typeof prompt === "string" ? prompt : "",
