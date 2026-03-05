@@ -21,6 +21,7 @@ CodeBento - A lightweight, clean, powerful web notebook for writing and running 
 1.1 Support for interactive sessions
 - Program 'waits' for user input
 - Multiple input statements supported
+- Intput validation, and robust error handling
 
 ## Getting Started
 Start up the web-assmebly spin runner:  

@@ -111,7 +111,13 @@ def run_session_step(
             if "__session_program" not in namespace or not callable(namespace["__session_program"]):
                 raise RuntimeError("__session_program not defined after transformation")
 
-            gen = namespace["__session_program"]()
+            result = namespace["__session_program"]()
+
+            # If the transformed code had no input() calls, it's a regular function, not a generator
+            if not hasattr(result, "__next__"):
+                return "done", stdout_buffer.getvalue(), stderr_buffer.getvalue(), "", {"inputs": inputs}
+
+            gen = result
 
             # Now drive the generator using all existing inputs
             prompt = ""
