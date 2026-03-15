@@ -1,13 +1,11 @@
 import { useState } from 'react';
 import Editor from './components/Editor';
-import OutputPanel from './components/OutputPanel';
+import Terminal, { type TerminalSegment } from './components/Terminal';
 import './App.css';
 
 function App() {
   const [language] = useState('python');
   const [sourceCode, setSourceCode] = useState('');
-  const [stdout, setStdout] = useState('');
-  const [stderr, setStderr] = useState('');
   const [loading, setLoading] = useState(false);
   const [notes, setNotes] = useState('');
   const [stdin, setStdin] = useState('');
@@ -15,6 +13,8 @@ function App() {
   const [sessionID, setSessionID] = useState<string | null>(null);
   const [sessionStatus, setSessionStatus] = useState<'idle' | 'waiting_for_input' | 'running'>('idle');
 
+  const [terminalSegments, setTerminalSegments] = useState<TerminalSegment[]>([]);
+  
   const ensureSession = async (): Promise<string> => {
     if (sessionID) {
       return sessionID;
@@ -42,13 +42,12 @@ function App() {
   const handleRun = async () => {
     // If the session is currently waiting for input, don't allow a new run
     if (sessionStatus === 'waiting_for_input') {
-      setStderr('Program is waiting for input. Please type input in stdin and click "Send Input to Session".');
+      setTerminalSegments((prev) => [...prev, { type: 'stderr', text: 'Program is waiting for input. Type in the terminal and press Enter.' }]);
       return;
     }
 
+    clearTerminal();
     setLoading(true);
-    setStdout('');
-    setStderr('');
     setSessionStatus('running');
   
     try {
@@ -68,19 +67,22 @@ function App() {
       }
   
       const result = await response.json();
-  
-      setStdout(result.stdout ?? '');
-      setStderr(result.stderr ?? '');
-  
+
+      const out = result.stdout ?? '';
+      const err = result.stderr ?? '';
+      if (out) setTerminalSegments((prev) => [...prev, { type: 'stdout', text: out }]);
+      if (err) setTerminalSegments((prev) => [...prev, { type: 'stderr', text: err }]);
+
       if (result.status === 'waiting_for_input') {
         setSessionStatus('waiting_for_input');
       } else {
         setSessionStatus('idle');
-        setSessionID(null);   
-        setStdin('');         
+        setSessionID(null);
+        setStdin('');
       }
     } catch (err) {
-      setStderr(`Error connecting to backend: ${(err as Error).message}`);
+      const msg = `Error connecting to backend: ${(err as Error).message}`;
+      setTerminalSegments((prev) => [...prev, { type: 'stderr', text: msg }]);
       setSessionStatus('idle');
       setSessionID(null);
     } finally {
@@ -90,10 +92,12 @@ function App() {
 
   const handleContinue = async () => {
     if (!sessionID) {
-      setStderr('No active session. Please run the code first.');
-      return;   
+      const msg = 'No active session. Please run the code first.';
+      setTerminalSegments((prev) => [...prev, { type: 'stderr', text: msg }]);
+      return;
     }
 
+    setTerminalSegments((prev) => [...prev, { type: 'input', text: stdin }]);
     setLoading(true);
     setSessionStatus('running');
 
@@ -106,26 +110,29 @@ function App() {
           stdinChunk: stdin,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Backend returned status ${response.status}`);
       }
 
       const result = await response.json();
 
-      setStdout(result.stdout ?? '');
-      setStderr(result.stderr ?? '');
+      const out = result.stdout ?? '';
+      const err = result.stderr ?? '';
+      if (out) setTerminalSegments((prev) => [...prev, { type: 'stdout', text: out }]);
+      if (err) setTerminalSegments((prev) => [...prev, { type: 'stderr', text: err }]);
 
-      setStdin(''); // clear stdin after sending
+      setStdin('');
 
       if (result.status === 'waiting_for_input') {
         setSessionStatus('waiting_for_input');
       } else {
         setSessionStatus('idle');
-        setSessionID(null);   // session is finished; don't reuse
+        setSessionID(null);
       }
     } catch (err) {
-      setStderr(`Error connecting to backend: ${(err as Error).message}`);
+      const msg = `Error connecting to backend: ${(err as Error).message}`;
+      setTerminalSegments((prev) => [...prev, { type: 'stderr', text: msg }]);
       setSessionStatus('idle');
       setSessionID(null);
     } finally {
@@ -140,13 +147,18 @@ function App() {
       await fetch(`http://localhost:3000/sessions/${sessionID}`, { method: 'DELETE' });
     } catch (err) {
       console.error('Failed to stop session', err);
-      setStderr(`Failed to stop session: ${(err as Error).message}`);
+      setTerminalSegments((prev) => [...prev, { type: 'stderr', text: `Failed to stop session: ${(err as Error).message}` }]);
     }
 
     setSessionID(null);
     setSessionStatus('idle');
     setLoading(false);
-    setStderr('Execution stopped by user.');
+    setTerminalSegments((prev) => [...prev, { type: 'stderr', text: 'Execution stopped by user.' }]);
+  };
+
+  const clearTerminal = () => {
+    setTerminalSegments([]);
+    setStdin('');
   };
 
   const showStopButton = !!sessionID && (loading || sessionStatus === 'waiting_for_input');
@@ -165,23 +177,16 @@ function App() {
         showStopButton={showStopButton}
       />
 
-      <OutputPanel
-        stdout={stdout}
-        stderr={stderr}
-        stdin={stdin}
-        onStdinChange={setStdin}
+      <Terminal
+        segments={terminalSegments}
+        inputValue={stdin}
+        onInputChange={setStdin}
+        onSubmit={handleContinue}
+        onClear={clearTerminal}
+        submitDisabled={sessionStatus !== 'waiting_for_input' || loading}
+        loading={loading}
+        showInput={sessionStatus === 'waiting_for_input'}
       />
-
-      {sessionStatus === 'waiting_for_input' && (
-        <div style={{ marginTop: '0.5rem' }}>
-          <button
-            onClick={handleContinue}
-            disabled={loading || !stdin}
-          >
-            Send Input to Session
-          </button>
-        </div>
-      )}
 
       <div className="notes-section" style={{ marginTop: '1rem' }}>
         <h2>Sticky Notes</h2>

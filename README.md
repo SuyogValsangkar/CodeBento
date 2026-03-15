@@ -23,6 +23,10 @@ CodeBento - A lightweight, clean, powerful web notebook for writing and running 
 - Multiple input statements supported
 - Intput validation, and robust error handling
 
+1.2 Terminal Emulator
+- Stdout and Stdin no longer separated
+- Stdout messages stay till explicitly cleared or new run 
+
 ## Getting Started
 Start up the web-assmebly spin runner:  
 `cd spin-runner`  
