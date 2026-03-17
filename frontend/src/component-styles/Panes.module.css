@@ -1,0 +1,98 @@
+/* Panes.module.css
+   Shared styles for all panes.
+*/
+
+/* Full height pane that lives inside a flex container */
+.paneRoot {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    background-color: #ffffff;
+}
+
+/* Pane header */
+.paneHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Main scrollable content area of a pane */
+.paneBody {
+    flex: 1;
+    min-height: 0;
+    padding: 1rem;
+    overflow: auto;
+    text-align: left;
+}
+
+/* -------------------------------------------- */
+/* Navigation Pane */
+/* -------------------------------------------- */
+.navPaneRoot {
+    composes: paneRoot;
+    border-right: 1px solid #e2e2e2;
+    background-color: #393646;
+}
+
+/* Title text */
+.navPaneTitle {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #f0f0f0;
+}
+
+/* Subtitle text */
+.navPaneSubtitle {
+    color: #b0b0b0;
+    font-size: 0.85rem;
+}
+
+/* Thin accent line under the nav title; 90% of pane width, centered */
+.navPaneTitleRule {
+    height: 1px;
+    width: 100%;
+    margin: 0 auto 0.75rem;
+    background-color: #677d6a;
+    border: none;
+}
+
+/* Row of nav action icons */
+.navPaneIconRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+/* Clickable icon container */
+.navPaneIconButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    transition: background-color 0.20s ease;
+}
+
+/* Hover effect */
+.navPaneIconButton:hover {
+    background-color: #4f4557;
+}
+
+/* Icon size */
+.navPaneIcon {
+    width: 20px;
+    height: 20px;
+    display: block;
+}
+

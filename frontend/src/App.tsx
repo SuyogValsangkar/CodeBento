@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import Editor from './components/Editor';
-import Terminal, { type TerminalSegment } from './components/Terminal';
-import './App.css';
+import Editor from './components/windows/Editor';
+import Terminal, { type TerminalSegment } from './components/windows/Terminal';
+import RootLayout from './components/RootLayout';
+import NavPane from './components/panes/NavPane';
+import NotebookPane from './components/panes/NotebookPane';
+import OutputPane from './components/panes/OutputPane';
 
 function App() {
   const [language] = useState('python');
   const [sourceCode, setSourceCode] = useState('');
   const [loading, setLoading] = useState(false);
-  const [notes, setNotes] = useState('');
   const [stdin, setStdin] = useState('');
 
   const [sessionID, setSessionID] = useState<string | null>(null);
@@ -164,49 +166,56 @@ function App() {
   const showStopButton = !!sessionID && (loading || sessionStatus === 'waiting_for_input');
 
   return (
-    <div className="container" style={{ padding: '1rem', maxWidth: '900px', margin: '0 auto' }}>
-      <h1 style={{ textAlign: 'center' }}>CodeBento MVP</h1>
+    <div
+      className="app-root"
+      style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <header
+        style={{
+          padding: '0.75rem 1rem',
+          borderBottom: '1px solid #e2e2e2',
+          textAlign: 'left',
+        }}
+      >
+        <h1 style={{ margin: 0, fontSize: '1.25rem' }}>CodeBento MVP</h1>
+      </header>
 
-      <Editor
-        language={language}
-        sourceCode={sourceCode}
-        onSourceCodeChange={setSourceCode}
-        onRun={handleRun}
-        onStop={handleStop}
-        loading={loading || sessionStatus === 'waiting_for_input'}
-        showStopButton={showStopButton}
-      />
-
-      <Terminal
-        segments={terminalSegments}
-        inputValue={stdin}
-        onInputChange={setStdin}
-        onSubmit={handleContinue}
-        onClear={clearTerminal}
-        submitDisabled={sessionStatus !== 'waiting_for_input' || loading}
-        loading={loading}
-        showInput={sessionStatus === 'waiting_for_input'}
-      />
-
-      <div className="notes-section" style={{ marginTop: '1rem' }}>
-        <h2>Sticky Notes</h2>
-        <textarea
-          className="notes-editor"
-          rows={5}
-          placeholder="Write your notes here..."
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '0.5rem',
-            borderRadius: '4px',
-            border: '1px solid #ccc',
-            resize: 'vertical',
-            overflowY: 'auto',
-            fontFamily: 'sans-serif',
-          }}
+      <main style={{ flex: 1, minHeight: 0 }}>
+        <RootLayout
+          nav={<NavPane />}
+          notebook={
+            <NotebookPane>
+              <Editor
+                language={language}
+                sourceCode={sourceCode}
+                onSourceCodeChange={setSourceCode}
+                onRun={handleRun}
+                onStop={handleStop}
+                loading={loading || sessionStatus === 'waiting_for_input'}
+                showStopButton={showStopButton}
+              />
+            </NotebookPane>
+          }
+          output={
+            <OutputPane>
+              <Terminal
+                segments={terminalSegments}
+                inputValue={stdin}
+                onInputChange={setStdin}
+                onSubmit={handleContinue}
+                onClear={clearTerminal}
+                submitDisabled={sessionStatus !== 'waiting_for_input' || loading}
+                loading={loading}
+                showInput={sessionStatus === 'waiting_for_input'}
+              />
+            </OutputPane>
+          }
         />
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,0 +1,135 @@
+/* Windows.module.css
+   Shared styles for all windows.
+*/
+
+/* Keep this file using #RRGGBB or #RRGGBBAA colors only. */
+
+/* Full-screen overlay for modals/windows */
+.windowOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+/* Generic window shell */
+.windowRoot {
+  width: min(421px, 100%);
+  border-radius: 10px;
+  border: 1px solid #00000014;
+  box-shadow: 0 16px 60px #00000040;
+  overflow: hidden;
+}
+
+/* Window header */
+.windowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1rem 0.5rem;
+}
+
+/* Title text */
+.windowTitle {
+  font-size: 1.0rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* Generic icon button */
+.windowIconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.20s ease;
+}
+
+/* Icon size */
+.windowIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+/* Accent line */
+.windowAccent {
+  height: 1px;
+  width: 92%;
+  margin: 0 auto;
+  border-radius: 999px;
+}
+
+/* Main content area */
+.windowBody {
+  padding: 0.85rem 1rem 1rem;
+}
+
+/* Subtitle text */
+.windowSubtitle {
+  color: #b0b0b0;
+  font-size: 0.85rem;
+  margin-bottom: 0.85rem;
+}
+
+/* Illustration */
+.windowIllustration {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 140px;
+}
+
+/* Illustration image */
+.windowIllustration img {
+  max-width: 100%;
+  max-height: 220px;
+  display: block;
+}
+
+/* -------------------------------------------- */
+/* Not Implemented Yet window */
+/* -------------------------------------------- */
+
+/* Overlay background */
+.notImplementedOverlay {
+  background: #00000059;
+}
+
+/* Window background */
+.notImplementedWindow {
+  background-color: #404040;
+  border: 1px solid #ffffff1f;
+  box-shadow: 0 16px 60px #00000073;
+}
+
+/* Hover effect */
+.notImplementedCloseButton:hover {
+  background-color: #666666;
+}
+
+/* Accent line */
+.notImplementedAccent {
+  background-color: #677d6a;
+}
+
+/* Title color */
+.notImplementedTitle {
+  color: #d6bd98;
+}
+
+/* Sushi illustration sizing (about 20% smaller) */
+.notImplementedSushi {
+  width: 64%;
+  height: auto;
+  max-height: 141px;
+}
