@@ -35,20 +35,20 @@
 /* -------------------------------------------- */
 .navPaneRoot {
     composes: paneRoot;
-    border-right: 1px solid #e2e2e2;
-    background-color: #393646;
+    border-right: 1px solid var(--pane-border-1);
+    background-color: var(--pane-background-1);
 }
 
 /* Title text */
 .navPaneTitle {
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: #f0f0f0;
+    color: var(--text-title-1);
 }
 
 /* Subtitle text */
 .navPaneSubtitle {
-    color: #b0b0b0;
+    color: var(--text-subtitle-1);
     font-size: 0.85rem;
 }
 
@@ -57,7 +57,7 @@
     height: 1px;
     width: 100%;
     margin: 0 auto 0.75rem;
-    background-color: #677d6a;
+    background-color: var(--accent-1);
     border: none;
 }
 
@@ -69,7 +69,7 @@
     margin-bottom: 0.75rem;
 }
 
-/* Clickable icon container */
+/* Nav pane icon button */
 .navPaneIconButton {
     display: flex;
     align-items: center;
@@ -86,13 +86,105 @@
 
 /* Hover effect */
 .navPaneIconButton:hover {
-    background-color: #4f4557;
+    background-color: var(--icon-hover-1);
 }
 
-/* Icon size */
+/* Nav pane icon size */
 .navPaneIcon {
     width: 20px;
     height: 20px;
     display: block;
+}
+
+/* -------------------------------------------- */
+/* Output Pane */
+/* -------------------------------------------- */
+
+.outputPaneRoot {
+    border-left: 1px solid var(--pane-border-1);
+    background-color: var(--pane-background-1);
+}
+
+/* Output pane toggle button on the resize edge */
+.outputPaneToggleButton {
+    position: absolute;
+    top: 50%;
+    left: -28px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 4px;
+    border: 1px solid var(--pane-border-1);
+    background-color: var(--button-background-1);
+    cursor: pointer;
+}
+
+/* Output pane toggle button hover effect */
+.outputPaneToggleButton:hover {
+    background-color: var(--icon-hover-2);
+}
+
+.outputPaneToggleIcon {
+    width: 22px;
+    height: 22px;
+    display: block;
+    transform-origin: center center;
+    transition: transform 800ms ease;
+}
+
+.outputPaneToggleIconCollapsed {
+    transform: rotate(180deg);
+}
+
+/* Output pane title text (mirrors nav title semantics) */
+.outputPaneTitle {
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-title-1);
+}
+
+/* Output pane subtitle text (mirrors nav subtitle semantics) */
+.outputPaneSubtitle {
+    color: var(--text-subtitle-1);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Thin accent line under output title */
+.outputPaneTitleRule {
+    height: 1px;
+    width: 100%;
+    margin: 0.5rem auto 0.75rem;
+    background-color: var(--accent-1);
+    border: none;
+}
+
+/* Output body content container */
+.outputPaneContent {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Output pane vertical stack (Terminal + divider + Error window) */
+.outputPaneStack {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* Divider line between Terminal and Error windows */
+.outputPaneDivider {
+    height: 1px;
+    width: 100%;
+    background-color: var(--accent-1);
+    border: none;
 }
 

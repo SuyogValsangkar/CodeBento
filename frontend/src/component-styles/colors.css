@@ -1,0 +1,69 @@
+/* Color palette for CodeBento */
+
+:root {
+    /* Pane background colors */
+    --pane-background-1: #35374B;
+    --pane-background-2: #ffffff;
+    --pane-background-3: #ffffff;
+    --pane-background-4: #ffffff;
+
+    /* Pane border colors */
+    --pane-border-1: #fffffff;
+    --pane-border-2: #e2e2e2;
+    --pane-border-3: #e2e2e2;
+    --pane-border-4: #e2e2e2;
+
+    /* Window background colors */
+    --window-background-1: #404040;
+    --window-background-2: #615E6B;
+    --window-background-3: #1e1e1e;
+    --window-background-4: #ffffff;
+
+    /* Window border colors */
+    --window-border-1: #404040;
+    --window-border-2: #615E6B;
+    --window-border-3: #2d2d2d;
+    --window-border-4: #e2e2e2;
+
+    /* Text colors */
+    --text-title-1: #F4EEE0;
+    --text-title-2: #D6BD98;
+    --text-title-3: #D68840;
+
+    --text-subtitle-1: #F4EEE0;
+    --text-subtitle-2: #D6BD98;
+
+    --text-body-1: #78A083;
+    --text-body-2: #D68840;
+    --text-body-3: #b0c6cc;
+
+    /* Icon colors */
+    --icon-1: #222222;
+    --icon-2: #222222;
+    --icon-3: #222222;
+    --icon-4: #222222;
+
+    /* Icon hover colors */
+    --icon-hover-1: #615E6B;
+    --icon-hover-2: #8C8C8C;
+    --icon-hover-3: #948295;
+    --icon-hover-4: #222222;
+
+    /* Button colors */
+    --button-background-1: #35374B;
+    --button-background-2: #ffffff;
+    --button-background-3: #ffffff;
+    --button-background-4: #ffffff;
+
+    /* Accent colors */
+    --accent-1: #78A083;
+    --accent-2: #404040;
+    --accent-3: #2d2d2d;
+    --accent-4: #222222;
+    --accent-5: #222222;
+    --accent-6: #222222;
+
+    /* Overlay colors */
+    --overlay-1: #00000059;
+    --overlay-2: #ffffff;
+}

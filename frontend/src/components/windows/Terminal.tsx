@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import styles from '../../component-styles/Windows.module.css';
+import ClearIcon from '../../assets/clear_button_icon.svg';
 
 export type TerminalSegment =
   | { type: 'stdout'; text: string }
@@ -40,11 +42,11 @@ const Terminal: React.FC<TerminalProps> = ({
     for (let i = 0; i < segments.length; i++) {
       const seg = segments[i];
       if (seg.type === 'input' && i > 0 && segments[i - 1].type === 'stdout' && !segments[i - 1].text.endsWith('\n')) {
-        continue; // already rendered with previous stdout
+        continue;
       }
       if (seg.type === 'stdout' && !seg.text.endsWith('\n') && segments[i + 1]?.type === 'input') {
         items.push({ type: 'stdout_inline_input', stdout: seg.text, input: segments[i + 1].text });
-        i++; // skip input segment
+        i++;
         continue;
       }
       if (seg.type === 'input') {
@@ -66,110 +68,59 @@ const Terminal: React.FC<TerminalProps> = ({
     if (e.key !== 'Enter') return;
     e.preventDefault();
     if (submitDisabled) return;
-    // Only submit when there is input (avoids sending empty line on accidental Enter)
     if (inputValue.trim() === '') return;
     onSubmit();
   };
 
   return (
-    <div
-      className="terminal"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid #333',
-        borderRadius: '4px',
-        overflow: 'hidden',
-        backgroundColor: '#1e1e1e',
-        fontFamily: 'monospace',
-        fontSize: '0.9rem',
-      }}
-    >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0.5rem', borderBottom: '1px solid #333', backgroundColor: '#2d2d2d' }}>
-        <span style={{ color: '#aaa' }}>Terminal</span>
+    <div className={styles.terminalRoot}>
+      <div className={styles.terminalHeader}>
+        <span className={styles.terminalTitle}>Output</span>
         <button
           type="button"
           onClick={onClear}
-          style={{
-            padding: '0.2rem 0.5rem',
-            fontSize: '0.8rem',
-            cursor: 'pointer',
-            backgroundColor: '#444',
-            color: '#ccc',
-            border: '1px solid #555',
-            borderRadius: '4px',
-          }}
+          className={styles.terminalClearButton}
+          aria-label="Clear output"
         >
-          Clear
+          <img src={ClearIcon} alt="" className={styles.terminalClearIcon} />
         </button>
       </div>
 
-      <div
-        ref={transcriptRef}
-        style={{
-          flex: 1,
-          minHeight: '120px',
-          maxHeight: '300px',
-          overflowY: 'auto',
-          padding: '0.5rem',
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-all',
-          textAlign: 'left',
-        }}
-      >
-        {segments.length === 0 && (
-          <span style={{ color: '#666' }}>Output will appear here. Run code to start.</span>
-        )}
-        {displayItems.map((item, i) => (
-          <div key={i} style={{ marginBottom: item.type === 'input' || item.type === 'stdout_inline_input' ? '0.25rem' : 0 }}>
-            {item.type === 'stdout' && (
-              <span style={{ color: '#d4d4d4' }}>{item.text}</span>
-            )}
-            {item.type === 'stderr' && (
-              <span style={{ color: '#f48771' }}>{item.text}</span>
-            )}
-            {item.type === 'input' && (
-              <span style={{ color: '#9cdcfe' }}>{item.prefix ? '> ' : ''}{item.text}</span>
-            )}
-            {item.type === 'stdout_inline_input' && (
-              <>
-                <span style={{ color: '#d4d4d4' }}>{item.stdout}</span>
-                <span style={{ color: '#9cdcfe' }}>{item.input}</span>
-              </>
-            )}
-          </div>
-        ))}
+      <div ref={transcriptRef} className={styles.terminalTranscript}>
+        {displayItems.map((item, i) => {
+          const spaced = item.type === 'input' || item.type === 'stdout_inline_input';
+          return (
+            <div key={i} className={spaced ? styles.terminalLineSpaced : styles.terminalLine}>
+              {item.type === 'stdout' && (
+                <span className={styles.terminalStdout}>{item.text}</span>
+              )}
+              {item.type === 'stderr' && (
+                <span className={styles.terminalStderr}>{item.text}</span>
+              )}
+              {item.type === 'input' && (
+                <span className={styles.terminalInput}>{item.prefix ? '> ' : ''}{item.text}</span>
+              )}
+              {item.type === 'stdout_inline_input' && (
+                <>
+                  <span className={styles.terminalStdout}>{item.stdout}</span>
+                  <span className={styles.terminalInput}>{item.input}</span>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {showInput && (
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.25rem 0.5rem',
-            borderTop: '1px solid #333',
-            backgroundColor: '#2d2d2d',
-            gap: '0.5rem',
-          }}
-        >
-          <span style={{ color: '#6a9955' }}>{'>'}</span>
+        <div className={styles.terminalInputRow}>
+          <span className={styles.terminalPrompt}>{'>'}</span>
           <input
             type="text"
             value={inputValue}
             onChange={e => onInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type input and press Enter"
-            style={{
-              flex: 1,
-              padding: '0.35rem 0.5rem',
-              fontSize: '0.9rem',
-              fontFamily: 'monospace',
-              backgroundColor: '#1e1e1e',
-              color: '#d4d4d4',
-              border: '1px solid #444',
-              borderRadius: '4px',
-              outline: 'none',
-            }}
+            className={styles.terminalInputField}
           />
         </div>
       )}

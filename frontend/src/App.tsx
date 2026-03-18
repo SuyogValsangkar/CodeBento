@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import Editor from './components/windows/Editor';
 import Terminal, { type TerminalSegment } from './components/windows/Terminal';
+import ErrorWindow from './components/windows/Error_Window';
 import RootLayout from './components/RootLayout';
 import NavPane from './components/panes/NavPane';
 import NotebookPane from './components/panes/NotebookPane';
 import OutputPane from './components/panes/OutputPane';
+import paneStyles from './component-styles/Panes.module.css';
 
 function App() {
   const [language] = useState('python');
@@ -48,7 +50,9 @@ function App() {
       return;
     }
 
-    clearTerminal();
+    // New run should start from a clean slate in both windows.
+    setTerminalSegments([]);
+    setStdin('');
     setLoading(true);
     setSessionStatus('running');
   
@@ -158,9 +162,13 @@ function App() {
     setTerminalSegments((prev) => [...prev, { type: 'stderr', text: 'Execution stopped by user.' }]);
   };
 
-  const clearTerminal = () => {
-    setTerminalSegments([]);
+  const clearOutputWindow = () => {
+    setTerminalSegments((prev) => prev.filter((seg) => seg.type === 'stderr'));
     setStdin('');
+  };
+
+  const clearErrorWindow = () => {
+    setTerminalSegments((prev) => prev.filter((seg) => seg.type !== 'stderr'));
   };
 
   const showStopButton = !!sessionID && (loading || sessionStatus === 'waiting_for_input');
@@ -202,16 +210,25 @@ function App() {
           }
           output={
             <OutputPane>
-              <Terminal
-                segments={terminalSegments}
-                inputValue={stdin}
-                onInputChange={setStdin}
-                onSubmit={handleContinue}
-                onClear={clearTerminal}
-                submitDisabled={sessionStatus !== 'waiting_for_input' || loading}
-                loading={loading}
-                showInput={sessionStatus === 'waiting_for_input'}
-              />
+              <div className={paneStyles.outputPaneStack}>
+                {/** Output window: stdout + echoed input only */}
+                <Terminal
+                  segments={terminalSegments.filter((s) => s.type !== 'stderr')}
+                  inputValue={stdin}
+                  onInputChange={setStdin}
+                  onSubmit={handleContinue}
+                  onClear={clearOutputWindow}
+                  submitDisabled={sessionStatus !== 'waiting_for_input' || loading}
+                  loading={loading}
+                  showInput={sessionStatus === 'waiting_for_input'}
+                />
+                
+                {/** Error window: stderr only */}
+                <ErrorWindow
+                  segments={terminalSegments.filter((s) => s.type === 'stderr')}
+                  onClear={clearErrorWindow}
+                />
+              </div>
             </OutputPane>
           }
         />
